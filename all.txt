@@ -1,3 +1,6 @@
+
+
+kkkkkkkkkkkkkkkkkkkkkkkkkkkk
 # keylogger_simulator + Telegram sender
 # EDUCATIONAL USE ONLY
 
@@ -343,3 +346,4 @@ if __name__ == "__main__":
         logging.info("Keyboard interrupt")
     finally:
         cleanup()
+
