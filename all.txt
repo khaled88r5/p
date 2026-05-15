@@ -1,1 +1,1545 @@
-111222333
+Gemini
+تجميع أكواد بايثون في ملف واحد
+محادثة مع Gemini
+حولهم لملف تكست جمعهم كلهم ف ملف واحد وافصل بينهم ب سطور #### و اكتب قبل كل جزء اسم الملف بتاعه
+
+إليك كافة الأكواد المجمعة من الملفات المرفقة في ملف نصي واحد، مع الفصل بينها كما طلبت:
+
+Boolean Expression Evaluator
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+reserved = {
+    'TRUE': 'TRUE', 'FALSE': 'FALSE',
+    'AND':  'AND',  'OR':    'OR',
+    'NOT':  'NOT'
+}
+tokens = ['LPAREN', 'RPAREN'] + list(reserved.values())
+
+def t_KEYWORD(t):
+    r'[A-Za-z]+'
+    t.type = reserved.get(t.value.upper())
+    if t.type is None:
+        print(f"Unknown keyword: {t.value}")
+        return
+    t.value = t.value.upper()
+    return t
+
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_ignore = ' \t'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+precedence = (
+    ('left',  'OR'),
+    ('left',  'AND'),
+    ('right', 'NOT'),
+)
+
+def p_expr_or(p):
+    '''expr : expr OR term'''
+    p[0] = p[1] or p[3]
+
+def p_expr_term(p):
+    '''expr : term'''
+    p[0] = p[1]
+
+def p_term_and(p):
+    '''term : term AND factor'''
+    p[0] = p[1] and p[3]
+
+def p_term_factor(p):
+    '''term : factor'''
+    p[0] = p[1]
+
+def p_factor(p):
+    '''factor : NOT factor
+              | TRUE
+              | FALSE
+              | LPAREN expr RPAREN'''
+    if len(p) == 3:          # NOT factor
+        p[0] = not p[2]
+    elif p[1] == 'TRUE':
+        p[0] = True
+    elif p[1] == 'FALSE':
+        p[0] = False
+    else:                       # ( expr )
+        p[0] = p[2]
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+expressions = [
+    "TRUE AND FALSE OR TRUE",
+    "NOT FALSE AND TRUE",
+    "TRUE OR (FALSE AND TRUE)",
+    "NOT (TRUE OR FALSE)",
+]
+for expr in expressions:
+    result = parser.parse(expr, lexer=lexer.clone())
+    print(f"Result: {result}")
+Character Classifier
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['LETTER', 'DIGIT', 'SYMBOL']
+
+t_LETTER = r'[A-Za-z]'
+t_DIGIT  = r'[0-9]'
+t_SYMBOL = r'[^A-Za-z0-9\s]'
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program_multiple(p):
+    '''program : program token'''
+    pass
+
+def p_program_single(p):
+    '''program : token'''
+    pass
+
+def p_token(p):
+    '''token : LETTER
+             | DIGIT
+             | SYMBOL'''
+    char = p[1]
+    kind = 'Letter' if char.isalpha() else ('Digit' if char.isdigit() else 'Symbol')
+    print(f"{char} → {kind}")
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "A 5 @ b 9"
+parser.parse(data, lexer=lexer)
+Even or Odd Checker
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['NUMBER']
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program_multiple(p):
+    '''program : program NUMBER'''
+    n = p[2]
+    label = "Even" if n % 2 == 0 else "Odd"
+    print(f"{n} → {label}")
+
+def p_program_single(p):
+    '''program : NUMBER'''
+    n = p[1]
+    label = "Even" if n % 2 == 0 else "Odd"
+    print(f"{n} → {label}")
+
+def p_error(p):
+    print(f"Syntax error at: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "4\n7\n10"
+parser.parse(data, lexer=lexer)
+IF–THEN Conditional Language
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+reserved = {
+    'IF': 'IF', 'THEN': 'THEN',
+    'PRINT': 'PRINT', 'SKIP': 'SKIP'
+}
+tokens = ['NUMBER', 'STRING', 'GT', 'LT', 'EQ'] + list(reserved.values())
+
+def t_ID(t):
+    r'[A-Za-z_][A-Za-z0-9_]*'
+    t.type = reserved.get(t.value.upper(), 'ID')
+    t.value = t.value.upper()
+    return t
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+def t_STRING(t):
+    r'"[^"]*"'
+    t.value = t.value[1:-1]
+    return t
+
+def t_EQ(t):
+    r'=='
+    return t
+
+t_GT = r'>'
+t_LT = r'<'
+t_ignore = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program(p):
+    '''program : program stmt 
+      | stmt'''
+    pass
+
+def p_stmt(p):
+    '''stmt : IF cond THEN action'''
+    condition = p[2]
+    action    = p[4]
+    if condition and action is not None:
+        print(action)
+
+def p_cond(p):
+    '''cond : NUMBER GT NUMBER
+           | NUMBER LT NUMBER
+           | NUMBER EQ NUMBER'''
+    if   p[2] == '>':  p[0] = p[1] >  p[3]
+    elif p[2] == '<':  p[0] = p[1] <  p[3]
+    elif p[2] == '==': p[0] = p[1] == p[3]
+
+def p_action_print(p):
+    '''action : PRINT STRING'''
+    p[0] = p[2]       # return message
+
+def p_action_skip(p):
+    '''action : SKIP'''
+    p[0] = None
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = '''IF 10 > 3  THEN PRINT "Big"
+IF 5  > 9  THEN PRINT "Unreachable"
+IF 7  == 7 THEN PRINT "Equal"
+IF 2  < 1  THEN SKIP'''
+
+parser.parse(data, lexer=lexer)
+Number Sum Calculator
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['NUMBER']
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+total = 0
+
+def p_program_multiple(p):
+    '''program : program NUMBER'''
+    global total
+    total += p[2]
+
+def p_program_single(p):
+    '''program : NUMBER'''
+    global total
+    total += p[1]
+
+def p_error(p):
+    print(f"Syntax error at: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "10 20 30 5"
+total = 0
+parser.parse(data, lexer=lexer)
+print(f"Sum = {total}")
+Simple Command Interpreter
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+reserved = {'SET': 'SET', 'ADD': 'ADD', 'PRINT': 'PRINT'}
+tokens = ['ID', 'NUMBER'] + list(reserved.values())
+
+def t_ID(t):
+    r'[A-Za-z_][A-Za-z0-9_]*'
+    t.type = reserved.get(t.value.upper(), 'ID')
+    if t.type != 'ID':
+        t.value = t.value.upper()
+    return t
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+t_ignore = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+env = {}
+
+def p_program(p):
+    '''program : program cmd 
+      | cmd'''
+    pass
+
+def p_cmd_set(p):
+    '''cmd : SET ID NUMBER'''
+    env[p[2]] = p[3]
+
+def p_cmd_add(p):
+    '''cmd : ADD ID NUMBER'''
+    if p[2] in env:
+        env[p[2]] += p[3]
+    else:
+        print(f"Error: variable '{p[2]}' is not defined")
+
+def p_cmd_print(p):
+    '''cmd : PRINT ID'''
+    if p[2] in env:
+        print(f"{p[2]} = {env[p[2]]}")
+    else:
+        print(f"Error: variable '{p[2]}' is not defined")
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = """SET   x  10
+SET   y  5
+ADD   x  3
+PRINT x
+ADD   y  20
+PRINT y
+PRINT z"""
+
+env = {}
+parser.parse(data, lexer=lexer)
+Simple Comparison Expression Evaluator
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+tokens = ['NUMBER', 'EQ', 'NEQ', 'GTE', 'LTE', 'GT', 'LT']
+
+def t_EQ(t):
+    r'=='
+    return t
+
+def t_NEQ(t):
+    r'!='
+    return t
+
+def t_GTE(t):
+    r'>='
+    return t
+
+def t_LTE(t):
+    r'<='
+    return t
+
+t_GT = r'>'
+t_LT = r'<'
+
+def t_NUMBER(t):
+    r'\d+(\.\d+)?'
+    t.value = float(t.value) if '.' in t.value else int(t.value)
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_expr(p):
+    '''expr : NUMBER op NUMBER'''
+    ops = {
+        '==': lambda a, b: a == b,
+        '!=': lambda a, b: a != b,
+        '>=': lambda a, b: a >= b,
+        '<=': lambda a, b: a <= b,
+        '>':  lambda a, b: a >  b,
+        '<':  lambda a, b: a <  b,
+    }
+    p[0] = ops[p[2]](p[1], p[3])
+
+def p_op(p):
+    ''' op : EQ 
+      | NEQ 
+      | GTE 
+      | LTE 
+      | GT 
+      | LT '''
+    p[0] = p[1]
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+lines = ["10 > 5", "3 == 7", "15 >= 15",
+         "8 != 8", "20 < 100", "4 <= 3"]
+
+for line in lines:
+    result = parser.parse(line, lexer=lexer.clone())
+    print(f"{line:<10} → {result}")
+Simple Login Validator
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+reserved = {'LOGIN': 'LOGIN'}
+tokens = ['WORD'] + list(reserved.values())
+
+def t_WORD(t):
+    r'[A-Za-z0-9]+'
+    t.type = reserved.get(t.value.upper(), 'WORD')
+    return t
+
+t_ignore = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program(p):
+    '''program : program entry 
+               | entry'''
+    pass
+
+def p_entry(p):
+    '''entry : LOGIN WORD WORD'''
+    username = p[2]
+    password = p[3]
+    
+    if password.isdigit():
+        print(f"{username:<8} → Valid Login (Numeric Password)")
+    else:
+        print(f"{username:<8} → Invalid Login (Passwords must be numeric)")
+
+def p_error(p):
+    if p:
+        print(f"Syntax error at: '{p.value}'")
+    else:
+        print("Syntax error at EOF")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = """LOGIN Ahmed 1234
+LOGIN Ali pass"""
+
+parser.parse(data, lexer=lexer)
+Variable Assignment & Symbol Table
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+tokens = ['ID', 'EQUALS', 'INTEGER', 'FLOAT', 'STRING']
+
+def t_FLOAT(t):
+    r'\d+\.\d+'
+    t.value = float(t.value)
+    return t
+
+def t_INTEGER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+def t_STRING(t):
+    r'"[^"]*"'
+    t.value = t.value[1:-1]   # strip quotes
+    return t
+
+def t_ID(t):
+    r'[A-Za-z_][A-Za-z0-9_]*'
+    return t
+
+t_EQUALS = r'='
+t_ignore  = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+symbol_table = {}
+
+def p_program(p):
+    '''program : program stmt
+              | stmt'''
+    pass
+
+def p_stmt(p):
+    '''stmt : ID EQUALS value'''
+    symbol_table[p[1]] = p[3]
+
+def p_value(p):
+    '''value : INTEGER
+             | FLOAT
+             | STRING'''
+    p[0] = p[1]
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = '''name  = "Ahmed"
+age   = 20
+gpa   = 3.85
+city  = "Cairo"
+score = 95'''
+
+parser.parse(data, lexer=lexer)
+
+print("── Symbol Table ──────────────")
+for var, val in symbol_table.items():
+    if isinstance(val, str):
+        print(f"{var:<7}: \"{val}\"  [string]")
+    elif isinstance(val, float):
+        print(f"{var:<7}: {val}      [float]")
+    else:
+        print(f"{var:<7}: {val}      [int]")
+Word Counter
+Python
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['WORD']
+
+def t_WORD(t):
+    r'[A-Za-z]+'
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+word_count = 0
+
+def p_program_multiple(p):
+    '''program : program WORD'''
+    global word_count
+    word_count += 1
+
+def p_program_single(p):
+    '''program : WORD'''
+    global word_count
+    word_count += 1
+
+def p_error(p):
+    print(f"Syntax error at: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "hello world this is compiler"
+word_count = 0
+parser.parse(data, lexer=lexer)
+print(f"Total Words: {word_count}")
+جمعهم كلهم ف جزء واح زي ما قولتلك و افصل بينهم ب سطور ##
+
+تم تجميع كافة الملفات في ملف نصي واحد كما طلبت، مع كتابة اسم كل ملف قبل الكود الخاص به والفصل بينهم بسطور ####.
+
+ملف التكست جاهز للتحميل:
+رمز TXT
+ all_codes_combined 
+TXT
+
+
+
+
+
+‫Gemini هو نموذج ذكاء اصطناعي وقد ينتج عنه أخطاء.
+
+اسم الملف: Boolean Expression Evaluator
+## Boolean Expression Lexer and Parser
+Problem Statement
+
+Build a Lexer and Parser for evaluating simple Boolean expressions.
+
+The parser must correctly handle operator precedence in the following order:
+
+Required Tokens,TRUE,FALSE,AND,OR,NOT,LPAREN,RPAREN
+
+All keywords are reserved words extracted from identifiers.
+
+
+NOT → Highest precedence
+AND → Medium precedence
+OR → Lowest precedence
+
+Parentheses () must override precedence normally.
+expr   : expr OR term
+       | term
+
+term   : term AND factor
+       | factor
+
+factor : NOT factor
+       | TRUE
+       | FALSE
+       | LPAREN expr RPAREN
+
+TRUE AND FALSE OR TRUE
+NOT FALSE AND TRUE
+TRUE OR (FALSE AND TRUE)
+NOT (TRUE OR FALSE)
+
+Expected Output
+Result: True
+Result: True
+Result: True
+Result: False
+
+###############################solution#################################
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+reserved = {
+    'TRUE': 'TRUE', 'FALSE': 'FALSE',
+    'AND':  'AND',  'OR':    'OR',
+    'NOT':  'NOT'
+}
+tokens = ['LPAREN', 'RPAREN'] + list(reserved.values())
+
+def t_KEYWORD(t):
+    r'[A-Za-z]+'
+    t.type = reserved.get(t.value.upper())
+    if t.type is None:
+        print(f"Unknown keyword: {t.value}")
+        return
+    t.value = t.value.upper()
+    return t
+
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_ignore = ' \t'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+precedence = (
+    ('left',  'OR'),
+    ('left',  'AND'),
+    ('right', 'NOT'),
+)
+
+def p_expr_or(p):
+    '''expr : expr OR term'''
+    p[0] = p[1] or p[3]
+
+def p_expr_term(p):
+    '''expr : term'''
+    p[0] = p[1]
+
+def p_term_and(p):
+    '''term : term AND factor'''
+    p[0] = p[1] and p[3]
+
+def p_term_factor(p):
+    '''term : factor'''
+    p[0] = p[1]
+
+def p_factor(p):
+    '''factor : NOT factor
+              | TRUE
+              | FALSE
+              | LPAREN expr RPAREN'''
+    if len(p) == 3:          # NOT factor
+        p[0] = not p[2]
+    elif p[1] == 'TRUE':
+        p[0] = True
+    elif p[1] == 'FALSE':
+        p[0] = False
+    else:                       # ( expr )
+        p[0] = p[2]
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+expressions = [
+    "TRUE AND FALSE OR TRUE",
+    "NOT FALSE AND TRUE",
+    "TRUE OR (FALSE AND TRUE)",
+    "NOT (TRUE OR FALSE)",
+]
+for expr in expressions:
+    result = parser.parse(expr, lexer=lexer.clone())
+    print(f"Result: {result}")
+
+
+####
+
+اسم الملف: Character Classifier
+Build a Lexer and Parser that classifies each character as: Letter, Digit, or Symbol.
+
+Required Tokens
+LETTER
+DIGIT
+SYMBOL
+LETTER: [A-Za-z]  |  DIGIT: [0-9]  |  SYMBOL: any other non-space char.
+
+Grammar Rules
+program : program token | token token : LETTER | DIGIT | SYMBOL
+
+Sample Input
+A 5 @ b 9
+
+Expected Output
+A → Letter 5 → Digit @ → Symbol b → Letter 9 → Digit
+
+👉 Focus: Multiple token types · Strong lexer practice.
+
+########################################################################################################
+
+# ─── LEXER ────────────────────────────────────────────
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['LETTER', 'DIGIT', 'SYMBOL']
+
+t_LETTER = r'[A-Za-z]'
+t_DIGIT  = r'[0-9]'
+t_SYMBOL = r'[^A-Za-z0-9\s]'
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program_multiple(p):
+    '''program : program token'''
+    pass
+
+def p_program_single(p):
+    '''program : token'''
+    pass
+
+def p_token(p):
+    '''token : LETTER
+             | DIGIT
+             | SYMBOL'''
+    char = p[1]
+    kind = 'Letter' if char.isalpha() else ('Digit' if char.isdigit() else 'Symbol')
+    print(f"{char} → {kind}")
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "A 5 @ b 9"
+parser.parse(data, lexer=lexer)
+
+
+####
+
+اسم الملف: Even or Odd Checker
+Build a Lexer and Parser that reads numbers and prints whether each is Even or Odd.
+
+Required Tokens
+NUMBER
+NUMBER: integer.
+
+Grammar Rules
+program : program NUMBER | NUMBER
+
+Sample Input
+4 7 10
+
+Expected Output
+4 → Even 7 → Odd 10 → Even
+👉 Focus: Simple condition inside parser · One token type.
+
+# ─── LEXER ────────────────────────────────────────────
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['NUMBER']
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program_multiple(p):
+    '''program : program NUMBER'''
+    n = p[2]
+    label = "Even" if n % 2 == 0 else "Odd"
+    print(f"{n} → {label}")
+
+def p_program_single(p):
+    '''program : NUMBER'''
+    n = p[1]
+    label = "Even" if n % 2 == 0 else "Odd"
+    print(f"{n} → {label}")
+
+def p_error(p):
+    print(f"Syntax error at: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "4\n7\n10"
+parser.parse(data, lexer=lexer)
+
+
+####
+
+اسم الملف: IF–THEN Conditional Language
+Build a Lexer and Parser for a simple conditional language using the syntax:
+IF <condition> THEN <action>. The condition compares two numbers (e.g., x > 5),
+and the action is either PRINT "message" or SKIP. The parser should evaluate each statement and execute the action only if the condition is true.
+
+Required Tokens
+IF
+THEN
+PRINT
+SKIP
+NUMBER
+STRING
+GT
+LT
+EQ
+All keywords are reserved. EQ matches ==.
+
+Grammar Rules
+program : program stmt | stmt stmt : IF cond THEN action cond : NUMBER GT NUMBER | NUMBER LT NUMBER | NUMBER EQ NUMBER action : PRINT STRING | SKIP
+
+Sample Input
+IF 10 > 3 THEN PRINT "Big" IF 5 > 9 THEN PRINT "Unreachable" IF 7 == 7 THEN PRINT "Equal" IF 2 < 1 THEN SKIP
+
+Expected Output
+Big Equal
+Hint: Use empty productions pattern knowledge from Section 4. The action rule for SKIP simply does nothing.
+Store the condition result in p[0] and pass it up to stmt.
+
+#############################################################################################################
+
+
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+reserved = {
+    'IF': 'IF', 'THEN': 'THEN',
+    'PRINT': 'PRINT', 'SKIP': 'SKIP'
+}
+tokens = ['NUMBER', 'STRING', 'GT', 'LT', 'EQ'] + list(reserved.values())
+
+def t_ID(t):
+    r'[A-Za-z_][A-Za-z0-9_]*'
+    t.type = reserved.get(t.value.upper(), 'ID')
+    t.value = t.value.upper()
+    return t
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+def t_STRING(t):
+    r'"[^"]*"'
+    t.value = t.value[1:-1]
+    return t
+
+def t_EQ(t):
+    r'=='
+    return t
+
+t_GT = r'>'
+t_LT = r'<'
+t_ignore = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program(p):
+    '''program : program stmt 
+      | stmt'''
+    pass
+
+def p_stmt(p):
+    '''stmt : IF cond THEN action'''
+    condition = p[2]
+    action    = p[4]
+    if condition and action is not None:
+        print(action)
+
+def p_cond(p):
+    '''cond : NUMBER GT NUMBER
+           | NUMBER LT NUMBER
+           | NUMBER EQ NUMBER'''
+    if   p[2] == '>':  p[0] = p[1] >  p[3]
+    elif p[2] == '<':  p[0] = p[1] <  p[3]
+    elif p[2] == '==': p[0] = p[1] == p[3]
+
+def p_action_print(p):
+    '''action : PRINT STRING'''
+    p[0] = p[2]       # return message
+
+def p_action_skip(p):
+    '''action : SKIP'''
+    p[0] = None
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = '''IF 10 > 3  THEN PRINT "Big"
+IF 5  > 9  THEN PRINT "Unreachable"
+IF 7  == 7 THEN PRINT "Equal"
+IF 2  < 1  THEN SKIP'''
+
+parser.parse(data, lexer=lexer)
+
+
+####
+
+اسم الملف: Number Sum Calculator
+Build a Lexer and Parser that reads numbers separated by spaces and computes their sum.
+
+Required Tokens
+NUMBER
+NUMBER: integer (one or more digits).
+
+Grammar Rules
+program : program NUMBER | NUMBER
+
+Sample Input
+10 20 30 5
+
+Expected Output
+Sum = 65
+👉 Focus: Token values · Simple accumulation.
+
+# ─── LEXER ────────────────────────────────────────────
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['NUMBER']
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+total = 0
+
+def p_program_multiple(p):
+    '''program : program NUMBER'''
+    global total
+    total += p[2]
+
+def p_program_single(p):
+    '''program : NUMBER'''
+    global total
+    total += p[1]
+
+def p_error(p):
+    print(f"Syntax error at: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "10 20 30 5"
+total = 0
+parser.parse(data, lexer=lexer)
+print(f"Sum = {total}")
+
+
+####
+
+اسم الملف: Simple Command Interpreter
+Build a Lexer and Parser for a mini command interpreter that supports three commands: SET var value (assigns a number to a variable), 
+ADD var value (adds a value to an existing variable), 
+and PRINT var (prints the variable's current value). All variable values are integers. If PRINT is called on an undefined variable, display an error message.
+
+Required Tokens
+SET
+ADD
+PRINT
+ID
+NUMBER
+SET, ADD, PRINT: reserved keywords extracted from identifiers.
+
+Grammar Rules
+program : program cmd | cmd cmd : SET ID NUMBER | ADD ID NUMBER | PRINT ID
+
+Sample Input
+SET x 10 SET y 5 ADD x 3 PRINT x ADD y 20 PRINT y PRINT z
+
+Expected Output
+x = 13 y = 25 Error: variable 'z' is not defined
+
+Hint: Keep a Python dictionary as your variable store.
+In the p_cmd rule, use len(p) to distinguish between PRINT (3 tokens) and SET/ADD (4 tokens), or write separate functions.
+
+
+######################################################################################################################################
+
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+reserved = {'SET': 'SET', 'ADD': 'ADD', 'PRINT': 'PRINT'}
+tokens = ['ID', 'NUMBER'] + list(reserved.values())
+
+def t_ID(t):
+    r'[A-Za-z_][A-Za-z0-9_]*'
+    t.type = reserved.get(t.value.upper(), 'ID')
+    if t.type != 'ID':
+        t.value = t.value.upper()
+    return t
+
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+t_ignore = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+env = {}
+
+def p_program(p):
+    '''program : program cmd 
+      | cmd'''
+    pass
+
+def p_cmd_set(p):
+    '''cmd : SET ID NUMBER'''
+    env[p[2]] = p[3]
+
+def p_cmd_add(p):
+    '''cmd : ADD ID NUMBER'''
+    if p[2] in env:
+        env[p[2]] += p[3]
+    else:
+        print(f"Error: variable '{p[2]}' is not defined")
+
+def p_cmd_print(p):
+    '''cmd : PRINT ID'''
+    if p[2] in env:
+        print(f"{p[2]} = {env[p[2]]}")
+    else:
+        print(f"Error: variable '{p[2]}' is not defined")
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = """SET   x  10
+SET   y  5
+ADD   x  3
+PRINT x
+ADD   y  20
+PRINT y
+PRINT z"""
+
+env = {}
+parser.parse(data, lexer=lexer)
+
+
+####
+
+اسم الملف: Simple Comparison Expression Evaluator
+Build a Lexer and Parser that evaluates simple comparison expressions involving two numbers and one comparison operator. 
+The program should read one expression per line and print whether it is True or False. Supported operators: ==, !=, >=, <=, >, <.
+
+Supported operators:
+
+==
+!=
+>=
+<=
+>
+<
+
+REQUIRED TOKENS
+NUMBER
+EQ
+NEQ
+GTE
+LTE
+GT
+LT
+
+Match two-character operators (==, !=, >=, <=) before single-character ones.
+
+GRAMMAR RULES
+expr : NUMBER op NUMBER
+
+op : EQ
+   | NEQ
+   | GTE
+   | LTE
+   | GT
+   | LT
+SAMPLE INPUT (ONE PER LINE)
+10 > 5
+3 == 7
+15 >= 15
+8 != 8
+20 < 100
+4 <= 3
+
+
+EXPECTED OUTPUT
+10 > 5 → True
+3 == 7 → False
+15 >= 15 → True
+8 != 8 → False
+20 < 100 → True
+4 <= 3 → False
+
+#######################################################################################################################################
+
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+tokens = ['NUMBER', 'EQ', 'NEQ', 'GTE', 'LTE', 'GT', 'LT']
+
+def t_EQ(t):
+    r'=='
+    return t
+
+def t_NEQ(t):
+    r'!='
+    return t
+
+def t_GTE(t):
+    r'>='
+    return t
+
+def t_LTE(t):
+    r'<='
+    return t
+
+t_GT = r'>'
+t_LT = r'<'
+
+def t_NUMBER(t):
+    r'\d+(\.\d+)?'
+    t.value = float(t.value) if '.' in t.value else int(t.value)
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_expr(p):
+    '''expr : NUMBER op NUMBER'''
+    ops = {
+        '==': lambda a, b: a == b,
+        '!=': lambda a, b: a != b,
+        '>=': lambda a, b: a >= b,
+        '<=': lambda a, b: a <= b,
+        '>':  lambda a, b: a >  b,
+        '<':  lambda a, b: a <  b,
+    }
+    p[0] = ops[p[2]](p[1], p[3])
+
+def p_op(p):
+    ''' op : EQ 
+      | NEQ 
+      | GTE 
+      | LTE 
+      | GT 
+      | LT '''
+    p[0] = p[1]
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+lines = ["10 > 5", "3 == 7", "15 >= 15",
+         "8 != 8", "20 < 100", "4 <= 3"]
+
+for line in lines:
+    result = parser.parse(line, lexer=lexer.clone())
+    print(f"{line:<10} → {result}")
+
+
+####
+
+اسم الملف: Simple Login Validator
+Build a Lexer and Parser that validates login entries in the format LOGIN username password. Rules: username = letters only, password = digits only.
+
+Required Tokens
+LOGIN
+NAME
+PASSWORD
+LOGIN: reserved keyword  |  NAME: letters only  |  PASSWORD: digits only.
+
+Grammar Rules
+program : program entry | entry entry : LOGIN NAME PASSWORD
+
+Sample Input
+LOGIN Ahmed 1234 LOGIN Ali pass
+
+Expected Output
+Ahmed → Valid Login Ali → Invalid Password
+
+#############################################################################################################
+
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+# We use 'WORD' for anything alphanumeric to avoid context errors
+reserved = {'LOGIN': 'LOGIN'}
+tokens = ['WORD'] + list(reserved.values())
+
+def t_WORD(t):
+    r'[A-Za-z0-9]+'
+    # Check if it's the 'LOGIN' keyword; otherwise, it's a generic WORD
+    t.type = reserved.get(t.value.upper(), 'WORD')
+    return t
+
+t_ignore = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+def p_program(p):
+    '''program : program entry 
+               | entry'''
+    pass
+
+def p_entry(p):
+    '''entry : LOGIN WORD WORD'''
+    username = p[2]
+    password = p[3]
+    
+    # Validation logic handled within the parser action
+    if password.isdigit():
+        print(f"{username:<8} → Valid Login (Numeric Password)")
+    else:
+        print(f"{username:<8} → Invalid Login (Passwords must be numeric)")
+
+def p_error(p):
+    if p:
+        print(f"Syntax error at: '{p.value}'")
+    else:
+        print("Syntax error at EOF")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = """LOGIN Ahmed 1234
+LOGIN Ali pass"""
+
+parser.parse(data, lexer=lexer)
+
+
+####
+
+اسم الملف: Variable Assignment & Symbol Table
+Build a Lexer and Parser for a simple variable assignment language. The parser must support three data types: integer, float, and string. 
+After parsing all assignments, print the contents of the symbol table (variable name → value and type).
+
+REQUIRED TOKENS
+ID
+EQUALS
+INTEGER
+FLOAT
+STRING
+ID: identifier (letters/underscores/digits, not starting with digit)
+STRING: double-quoted text, e.g. "hello"
+EQUALS: the = character
+
+GRAMMAR RULES
+program : program stmt | stmt
+
+stmt : ID EQUALS value
+
+value : INTEGER
+      | FLOAT
+      | STRING
+
+SAMPLE INPUT
+name = "Ahmed"
+age = 20
+gpa = 3.85
+city = "Cairo"
+score = 95
+EXPECTED OUTPUT
+
+--- Symbol Table ---
+
+name : "Ahmed" [string]
+age : 20 [int]
+gpa : 3.85 [float]
+city : "Cairo" [string]
+score : 95 [int]
+
+######################################################################################################################################################
+
+
+
+import ply.lex as lex
+import ply.yacc as yacc
+
+# ─── LEXER ────────────────────────────────────────────
+tokens = ['ID', 'EQUALS', 'INTEGER', 'FLOAT', 'STRING']
+
+def t_FLOAT(t):
+    r'\d+\.\d+'
+    t.value = float(t.value)
+    return t
+
+def t_INTEGER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+
+def t_STRING(t):
+    r'"[^"]*"'
+    t.value = t.value[1:-1]   # strip quotes
+    return t
+
+def t_ID(t):
+    r'[A-Za-z_][A-Za-z0-9_]*'
+    return t
+
+t_EQUALS = r'='
+t_ignore  = ' \t\n'
+
+def t_error(t):
+    print(f"Illegal character: '{t.value[0]}'")
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+symbol_table = {}
+
+def p_program(p):
+    '''program : program stmt
+              | stmt'''
+    pass
+
+def p_stmt(p):
+    '''stmt : ID EQUALS value'''
+    symbol_table[p[1]] = p[3]
+
+def p_value(p):
+    '''value : INTEGER
+             | FLOAT
+             | STRING'''
+    p[0] = p[1]
+
+def p_error(p):
+    print(f"Syntax error: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = '''name  = "Ahmed"
+age   = 20
+gpa   = 3.85
+city  = "Cairo"
+score = 95'''
+
+parser.parse(data, lexer=lexer)
+
+print("── Symbol Table ──────────────")
+for var, val in symbol_table.items():
+    if isinstance(val, str):
+        print(f"{var:<7}: \"{val}\"  [string]")
+    elif isinstance(val, float):
+        print(f"{var:<7}: {val}      [float]")
+    else:
+        print(f"{var:<7}: {val}        [int]")
+
+
+####
+
+اسم الملف: Word Counter
+uild a Lexer and a basic Parser that counts how many words are in the input. A word is a sequence of letters only.
+
+Required Tokens
+WORD
+WORD: one or more letters (A–Z, a–z) only.
+
+Grammar Rules
+program : program WORD | WORD
+
+Sample Input
+hello world this is compiler
+
+Expected Output
+Total Words: 5
+👉 Focus: Basic token recognition · No complex grammar.
+
+###############################################################################################################
+
+# ─── LEXER ────────────────────────────────────────────
+import ply.lex as lex
+import ply.yacc as yacc
+
+tokens = ['WORD']
+
+def t_WORD(t):
+    r'[A-Za-z]+'
+    return t
+
+t_ignore = ' \t'
+
+def t_error(t):
+    t.lexer.skip(1)
+
+lexer = lex.lex()
+
+# ─── PARSER ───────────────────────────────────────────
+word_count = 0
+
+def p_program_multiple(p):
+    '''program : program WORD'''
+    global word_count
+    word_count += 1
+
+def p_program_single(p):
+    '''program : WORD'''
+    global word_count
+    word_count += 1
+
+def p_error(p):
+    print(f"Syntax error at: {p}")
+
+parser = yacc.yacc()
+
+# ─── TEST ─────────────────────────────────────────────
+data = "hello world this is compiler"
+word_count = 0
+parser.parse(data, lexer=lexer)
+print(f"Total Words: {word_count}")
+all_codes_combined.txt
+جارٍ عرض "all_codes_combined.txt".
